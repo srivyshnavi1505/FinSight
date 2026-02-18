@@ -62,9 +62,7 @@ authRoute.get(
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    res.redirect(
-      `${process.env.CLIENT_URL}/oauth-success?token=${accessToken}`
-    );
+    res.redirect(`${process.env.CLIENT_URL}/oauth-success`);
   }
 );
 
