@@ -1,7 +1,10 @@
 import { Router } from "express";
-import { register, authenticate, refreshAccessToken } from "../services/authServices.js";
+import passport from "passport";
+import { register, authenticate, refreshAccessToken, issuetokens } from "../services/authServices.js";
 
 export const authRoute = Router();
+
+//local auth routes
 
 // Register
 authRoute.post("/register", async (req, res, next) => {
@@ -35,6 +38,35 @@ authRoute.post("/login", async (req, res, next) => {
     next(err);
   }
 });
+
+
+// google auth routes
+
+authRoute.get(
+  "google",
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+  })
+);
+
+authRoute.get(
+  "/google/callback",
+  passport.authenticate("google", { session: false }),
+  (req, res) => {
+    const { accessToken, refreshToken } = issueTokens(req.user);
+
+    res.cookie("refresh_token", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.redirect(
+      `${process.env.CLIENT_URL}/oauth-success?token=${accessToken}`
+    );
+  }
+);
 
 // Refresh token
 authRoute.post("/refresh", async (req, res, next) => {

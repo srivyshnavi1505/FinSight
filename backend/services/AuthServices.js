@@ -4,7 +4,7 @@ import bcrypt from "bcrypt";
 
 const generateAccessToken = (user) => {
   return jwt.sign(
-    { sub: user._id, roles: user.roles },
+    { sub: user._id, role: user.role },
     process.env.ACCESS_TOKEN_SECRET,
     { expiresIn: "15m" }
   );
@@ -19,7 +19,7 @@ const generateRefreshToken = (user) => {
 };
 
 export const register = async (userData) => {
-  const { firstName, lastName, email, password, role = "user" } = userData;
+  const { name, email, password} = userData;
 
   const existingUser = await UserModel.findOne({ email });
   if (existingUser) {
@@ -29,11 +29,10 @@ export const register = async (userData) => {
   const hashedpwd=await bcrypt.hash(password, 10);
 
   const user = new UserModel({
-    firstName,
-    lastName,
+    name,
     email,
     passwordHash: hashedpwd, // hashed pwd using bcrypt
-    roles: [role],
+    authProvider: 'local',
   });
 
   await user.save();
@@ -41,18 +40,30 @@ export const register = async (userData) => {
 };
 
 export const authenticate = async (email, password) => {
-  const user = await UserModel.findOne({ email });
+  const user = await UserModel.findOne({ email, authProvider: 'local' });
   if (!user) throw new Error("Invalid credentials");
+  
+  // const user = await UserModel.findOne({ email });
+  // if (!user) throw new Error("Invalid credentials");
 
   const isValid = await bcrypt.compare(password, user.passwordHash);
   if (!isValid) throw new Error("Invalid credentials");
 
   if (!user.isActive) throw new Error("Account is deactivated");
 
+  // const accessToken = generateAccessToken(user);
+  // const refreshToken = generateRefreshToken(user);
+
+  // return { accessToken, refreshToken, user: user.toJSON() };
+
+  return issuetokens(user);
+};
+
+export const issuetokens= (user) => {
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
 
-  return { accessToken, refreshToken, user: user.toJSON() };
+  return {accessToken, refreshToken, user: user.toJSON() };
 };
 
 export const refreshAccessToken = async (refreshToken) => {

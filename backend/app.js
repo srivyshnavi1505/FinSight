@@ -2,6 +2,8 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import helmet from 'helmet';
+import passport from 'passport';
+import "./services/GoogleAuth.js";
 import { authRoute } from "./APIs/AuthAPI.js";
 import errorHandler from "./middleware/errorHandler.js";
 
@@ -14,6 +16,7 @@ app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:3000',
   credentials: true,
 }));
+app.use(passport.initialize());
 
 app.use("/api/auth", authRoute);
 

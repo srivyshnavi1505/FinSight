@@ -1,45 +1,51 @@
 import { Schema, model } from "mongoose";
 
-
 const UserSchema = new Schema(
   {
-    firstName: {
+    name: {
       type: String,
-      required: [true, "First name is required"],
+      required: [true, "Name is required"],
       trim: true,
     },
-    lastName: {
-      type: String,
-      required: [true, "Last name is required"],
-      trim: true,
-    },
+
     email: {
       type: String,
       required: [true, "Email is required"],
-      unique: [true, "Email already exists"],
+      unique: true,
       lowercase: true,
       trim: true,
     },
+
+    // Used ONLY for local (email/password) login
     passwordHash: {
       type: String,
-      required :[true,"password is required"],
-      // Not required if using social login
+      required: function () {
+        return this.authProvider === "local";
+      },
     },
+
+    // Used ONLY for Google login
     googleId: {
       type: String,
-      sparse: true,
       unique: true,
+      sparse: true, // allows multiple nulls
     },
-    profileImageUrl: {
+
+    // Defines how the user authenticated
+    authProvider: {
       type: String,
-      default: null,
+      enum: ["local", "google"],
+      required: true,
+      default: "local",
     },
-    roles: {
+
+    role: {
       type: [String],
       enum: ["user", "annotator", "admin"],
       default: ["user"],
-      required: [true, "At least one role is required"],
+      required: true,
     },
+
     isActive: {
       type: Boolean,
       default: true,
