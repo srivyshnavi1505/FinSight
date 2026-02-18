@@ -1,30 +1,22 @@
-import express from "express";
-import cookieParser from "cookie-parser";
+import express from 'express';
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import helmet from 'helmet';
+import { authRoute } from "./APIs/AuthAPI.js";
+import errorHandler from "./middleware/errorHandler.js";
 
-import { UserModel } from "./Models/UserModel.js";
 const app = express();
 
-// Middlewares
+app.use(helmet());
 app.use(express.json());
 app.use(cookieParser());
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  credentials: true,
+}));
 
-// Test route
-app.get("/", (req, res) => {
-  res.send("Fincheck API is running...");
-});
+app.use("/api/auth", authRoute);
 
-
-
-
-app.get("/create-user", async (req, res) => {
-  const user = await UserModel.create({
-    firstName: "Test",
-    lastName: "User",
-    email: "test@example.com",
-    passwordHash: "dummy123"
-  });
-
-  res.json(user);
-});
+app.use(errorHandler);
 
 export default app;
